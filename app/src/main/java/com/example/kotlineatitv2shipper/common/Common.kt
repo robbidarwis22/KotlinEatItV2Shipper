@@ -23,6 +23,7 @@ import com.example.kotlineatitv2shipper.model.TokenModel
 import com.google.firebase.database.FirebaseDatabase
 
 object Common {
+    val SHIPPING_ORDER_REF: String="ShippingOrder" //same as server app
     val ORDER_REF: String="Order"
     val SHIPPER_REF = "Shipper"
     var currentShipperUser: ShipperUserModel? = null
