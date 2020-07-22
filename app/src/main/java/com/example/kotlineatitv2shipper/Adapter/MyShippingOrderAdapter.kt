@@ -1,6 +1,7 @@
 package com.example.kotlineatitv2shipper.Adapter
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
@@ -10,9 +11,12 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.kotlineatitv2shipper.R
+import com.example.kotlineatitv2shipper.ShippingActivity
 import com.example.kotlineatitv2shipper.common.Common
 import com.example.kotlineatitv2shipper.model.ShippingOrderModel
 import com.google.android.material.button.MaterialButton
+import com.google.gson.Gson
+import io.paperdb.Paper
 import java.text.SimpleDateFormat
 
 class MyShippingOrderAdapter(var context: Context,
@@ -22,7 +26,7 @@ class MyShippingOrderAdapter(var context: Context,
 
     init {
         simpleDateFormat = SimpleDateFormat("dd-MM-yyyy HH:mm:ss")
-
+        Paper.init(context)
     }
 
     inner class MyViewHolder(itemView: View):RecyclerView.ViewHolder(itemView)
@@ -72,6 +76,15 @@ class MyShippingOrderAdapter(var context: Context,
         if (shippingOrderModelList[position].isStartTrip)
         {
             holder.btn_ship_now.isEnabled=false
+        }
+
+        //Event
+        holder.btn_ship_now.setOnClickListener {
+
+            //Write data
+            Paper.book().write(Common.SHIPPING_DATA, Gson().toJson(shippingOrderModelList[0]))
+
+            context.startActivity(Intent(context, ShippingActivity::class.java))
         }
     }
 }
