@@ -12,7 +12,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.kotlineatitv2shipper.Adapter.MyShippingOrderAdapter
+import com.example.kotlineatitv2shipper.adapter.MyShippingOrderAdapter
 import com.example.kotlineatitv2shipper.R
 import com.example.kotlineatitv2shipper.common.Common
 import com.example.kotlineatitv2shipper.model.ShippingOrderModel

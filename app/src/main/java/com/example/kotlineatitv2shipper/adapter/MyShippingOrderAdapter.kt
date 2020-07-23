@@ -1,4 +1,4 @@
-package com.example.kotlineatitv2shipper.Adapter
+package com.example.kotlineatitv2shipper.adapter
 
 import android.content.Context
 import android.content.Intent
