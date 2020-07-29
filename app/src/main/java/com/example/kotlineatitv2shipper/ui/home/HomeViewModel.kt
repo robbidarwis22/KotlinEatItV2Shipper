@@ -43,6 +43,7 @@ class HomeViewModel : ViewModel(), IShippingOrderCallbackListener {
                 for (itemSnapshot in p0.children)
                 {
                     val shippingOrder = itemSnapshot.getValue(ShippingOrderModel::class.java)
+                    shippingOrder!!.key = itemSnapshot.key
                     tempList.add(shippingOrder!!)
                 }
                 listener.onShippingOrderLoadSuccess(tempList)
