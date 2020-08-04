@@ -187,8 +187,40 @@ class ShippingActivity : AppCompatActivity(), OnMapReadyCallback {
             Paper.book().write(Common.TRIP_START,data)
             btn_start_trip.isEnabled = false //Deactive after click
 
-            //Show directions from shipper to order's location after start trip
-            drawRoutes(data)
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return@setOnClickListener //adding feature ------------------------------------------------------------------------
+            }
+            fusedLocationProviderClient.lastLocation.addOnSuccessListener { location ->
+                val update_data = HashMap<String,Any>()
+                update_data.put("currentLat",location.latitude);
+                update_data.put("currentLng",location.longitude);
+
+                FirebaseDatabase.getInstance()
+                    .getReference(Common.SHIPPING_ORDER_REF)
+                    .child(shippingOrderModel!!.key!!)
+                    .updateChildren(update_data)
+                    .addOnFailureListener { e->
+                        Toast.makeText(this,e.message,Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnSuccessListener { aVoid->
+                        //Show directions from shipper to order's location after start trip
+                        drawRoutes(data)
+                    }
+            }
         }
 
         btn_show.setOnClickListener {
