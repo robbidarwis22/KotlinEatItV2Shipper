@@ -72,11 +72,15 @@ object Common {
         }
 
     fun updateToken(context: Context, token: String, isServerToken:Boolean, isShipperToken:Boolean) {
-        FirebaseDatabase.getInstance()
-            .getReference(Common.TOKEN_REF)
-            .child(Common.currentShipperUser!!.uid!!) //okay, cause we have!! after Common.currentuser, so it is null. we will not update it
-            .setValue(TokenModel(Common.currentShipperUser!!.phone!!,token,isServerToken,isShipperToken))
-            .addOnFailureListener{ e-> Toast.makeText(context,""+e.message,Toast.LENGTH_SHORT).show()}
+       //Fix crash on first time run
+        if (Common.currentShipperUser != null)
+        {
+            FirebaseDatabase.getInstance()
+                .getReference(Common.TOKEN_REF)
+                .child(Common.currentShipperUser!!.uid!!) //okay, cause we have!! after Common.currentuser, so it is null. we will not update it
+                .setValue(TokenModel(currentShipperUser!!.phone!!,token,isServerToken,isShipperToken))
+                .addOnFailureListener{ e-> Toast.makeText(context,""+e.message, Toast.LENGTH_SHORT).show()}
+        }
     }
 
     fun showNotification(context: Context, id: Int, title: String?, content: String?,intent: Intent?) {
@@ -117,17 +121,19 @@ object Common {
     }
 
     fun getBearing(begin: LatLng, end: LatLng): Float {
-        val lat = Math.abs(begin.latitude - end.longitude)
+        val lat = Math.abs(begin.latitude - end.latitude)
         val lng = Math.abs(begin.longitude - end.longitude)
-        if (begin.latitude < end.latitude && begin.longitude < end.longitude)
-            return Math.toDegrees(Math.atan(lng/lat)).toFloat()
-        else if (begin.latitude >= end.latitude && begin.longitude < end.longitude)
-            return (90-Math.toDegrees(Math.atan(lng/lat))+90).toFloat()
-        else if (begin.latitude >= end.latitude && begin.longitude >= end.longitude)
-            return (Math.toDegrees(Math.atan(lng/lat))+180).toFloat()
-        else if (begin.latitude < end.latitude && begin.longitude >= end.longitude)
-            return (90-Math.toDegrees(Math.atan(lng/lat))+270).toFloat()
-        return -1.0f
+        if (begin.latitude < end.latitude && begin.longitude < end.longitude) return Math.toDegrees(
+            Math.atan(lng / lat)
+        )
+            .toFloat() else if (begin.latitude >= end.latitude && begin.longitude < end.longitude) return (90 - Math.toDegrees(
+            Math.atan(lng / lat)
+        ) + 90).toFloat() else if (begin.latitude >= end.latitude && begin.longitude >= end.longitude) return (Math.toDegrees(
+            Math.atan(lng / lat)
+        ) + 180).toFloat() else if (begin.latitude < end.latitude && begin.longitude >= end.longitude) return (90 - Math.toDegrees(
+            Math.atan(lng / lat)
+        ) + 270).toFloat()
+        return (-1).toFloat()
     }
 
     fun decodePoly(encoded: String): List<LatLng> {

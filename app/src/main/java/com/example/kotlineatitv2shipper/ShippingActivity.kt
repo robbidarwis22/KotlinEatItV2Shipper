@@ -390,7 +390,7 @@ class ShippingActivity : AppCompatActivity(), OnMapReadyCallback {
                                 marker!!.setAnchor(0.5f,0.5f)
                                 marker!!.rotation = Common.getBearing(startPosition!!,newPos)
 
-                                mMap.animateCamera(CameraUpdateFactory.newLatLng(marker.position))
+                                mMap.moveCamera(CameraUpdateFactory.newLatLng(marker.position)) //Fixed
 
                             }
 
