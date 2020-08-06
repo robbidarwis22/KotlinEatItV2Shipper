@@ -1,7 +1,6 @@
 package com.example.kotlineatitv2shipper.remote
 
 import io.reactivex.Observable
-import io.reactivex.Observer
 import retrofit2.http.GET
 import retrofit2.http.Query
 
