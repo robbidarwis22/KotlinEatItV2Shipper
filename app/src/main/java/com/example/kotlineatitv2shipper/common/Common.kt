@@ -8,6 +8,7 @@ import android.content.Intent
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Typeface
+import android.location.Location
 import android.os.Build
 import android.text.Spannable
 import android.text.SpannableString
@@ -169,5 +170,9 @@ object Common {
         }
         return poly
     }
-    
+
+    fun buildLocationString(location: Location?): String? {
+            return StringBuilder().append(location!!.latitude).append(",").append(location!!.longitude).toString()
+    }
+
 }
