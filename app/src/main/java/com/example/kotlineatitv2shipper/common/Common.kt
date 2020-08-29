@@ -19,12 +19,16 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import com.example.kotlineatitv2shipper.R
+import com.example.kotlineatitv2shipper.model.RestaurantModel
 import com.example.kotlineatitv2shipper.model.ShipperUserModel
 import com.example.kotlineatitv2shipper.model.TokenModel
 import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.database.FirebaseDatabase
 
 object Common {
+    val RESTAURANT_SAVE: String="RESTAURANT_SAVE"
+    var currentRestaurant: RestaurantModel?=null
+    val RESTAURANT_REF: String="Restaurant" //same as firebase
     val TRIP_START: String?="Trip"
     val SHIPPING_DATA: String?="ShippingData"
     val SHIPPING_ORDER_REF: String="ShippingOrder" //same as server app

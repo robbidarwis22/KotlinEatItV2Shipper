@@ -30,7 +30,9 @@ class HomeViewModel : ViewModel(), IShippingOrderCallbackListener {
     private fun loadOrderByShipper(shipperPhone: String) {
         val tempList : MutableList<ShippingOrderModel> = ArrayList()
         val orderRef = FirebaseDatabase.getInstance()
-            .getReference(Common.SHIPPING_ORDER_REF)
+            .getReference(Common.RESTAURANT_REF)
+            .child(Common.currentRestaurant!!.uid)
+            .child(Common.SHIPPING_ORDER_REF)
             .orderByChild("shipperPhone")
             .equalTo(Common.currentShipperUser!!.phone)
 
