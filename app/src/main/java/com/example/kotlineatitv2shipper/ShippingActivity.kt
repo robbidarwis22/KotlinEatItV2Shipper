@@ -240,7 +240,9 @@ class ShippingActivity : AppCompatActivity(), OnMapReadyCallback {
                         update_data.put("estimateTime",estimateTime)
 
                         FirebaseDatabase.getInstance()
-                            .getReference(Common.SHIPPING_ORDER_REF)
+                            .getReference(Common.RESTAURANT_REF)
+                            .child(Common.currentRestaurant!!.uid)
+                            .child(Common.SHIPPING_ORDER_REF)
                             .child(shippingOrderModel!!.key!!)
                             .updateChildren(update_data)
                             .addOnFailureListener { e->
@@ -389,7 +391,9 @@ class ShippingActivity : AppCompatActivity(), OnMapReadyCallback {
                         update_data.put("estimateTime",estimateTime)
 
                         FirebaseDatabase.getInstance()
-                            .getReference(Common.SHIPPING_ORDER_REF)
+                            .getReference(Common.RESTAURANT_REF)
+                            .child(Common.currentRestaurant!!.uid)
+                            .child(Common.SHIPPING_ORDER_REF)
                             .child(shippingOrderModel!!.key!!)
                             .updateChildren(update_data)
                             .addOnFailureListener { e->

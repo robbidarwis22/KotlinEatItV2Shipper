@@ -1,5 +1,6 @@
 package com.example.kotlineatitv2shipper.ui.home
 
+import android.text.TextUtils
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.kotlineatitv2shipper.callback.IShippingOrderCallbackListener
@@ -23,7 +24,9 @@ class HomeViewModel : ViewModel(), IShippingOrderCallbackListener {
     }
 
     fun getOrderModelMutableLiveData(shipperPhone:String):MutableLiveData<List<ShippingOrderModel>>{
-        loadOrderByShipper(shipperPhone)
+        //Fix crash when press back button - put app to background
+        if (shipperPhone != null && !TextUtils.isEmpty(shipperPhone))
+            loadOrderByShipper(shipperPhone)
         return orderModelMutableLiveData
     }
 
