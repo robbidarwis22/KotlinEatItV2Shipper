@@ -16,15 +16,21 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.animation.LinearInterpolator
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
 import com.bumptech.glide.Glide
 import com.example.kotlineatitv2shipper.common.Common
+import com.example.kotlineatitv2shipper.model.FCMSendData
 import com.example.kotlineatitv2shipper.model.ShippingOrderModel
+import com.example.kotlineatitv2shipper.model.TokenModel
+import com.example.kotlineatitv2shipper.model.eventbus.UpdateShippingOrderEvent
+import com.example.kotlineatitv2shipper.remote.IFCMService
 import com.example.kotlineatitv2shipper.remote.IGoogleApi
 import com.example.kotlineatitv2shipper.remote.RetrofitClient
+import com.example.kotlineatitv2shipper.remote.RetrofitFCMClient
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.location.*
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -37,7 +43,10 @@ import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.karumi.dexter.Dexter
@@ -51,6 +60,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_shipping.*
+import org.greenrobot.eventbus.EventBus
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
@@ -89,6 +99,7 @@ class ShippingActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private var polylineList:List<LatLng> = ArrayList<LatLng>()
     private var iGoogleApi:IGoogleApi?=null
+    private var ifcmService:IFCMService?=null
     private var compositeDisposable = CompositeDisposable()
 
     private lateinit var places_fragment:AutocompleteSupportFragment
@@ -104,6 +115,7 @@ class ShippingActivity : AppCompatActivity(), OnMapReadyCallback {
         setContentView(R.layout.activity_shipping)
 
         iGoogleApi = RetrofitClient.instance!!.create(IGoogleApi::class.java)
+        ifcmService = RetrofitFCMClient.getInstance().create(IFCMService::class.java)
 
         initPlaces()
         setupPlaceAutocomplete()
@@ -300,6 +312,120 @@ class ShippingActivity : AppCompatActivity(), OnMapReadyCallback {
                 val intent = Intent(Intent.ACTION_CALL)
                 intent.data = (Uri.parse(StringBuilder("tel:").append(shippingOrderModel!!.orderModel!!.userPhone!!).toString()))
                 startActivity(intent)
+            }
+        }
+        
+        btn_done.setOnClickListener { 
+            if (shippingOrderModel != null)
+            {
+                val builder = AlertDialog.Builder(this)
+                    .setTitle("Done Order")
+                    .setMessage("Confirm you already shipped this order")
+                    .setNegativeButton("NO"){ dialogInterface, i -> dialogInterface.dismiss() }
+                    .setPositiveButton("YES"){ dialogInterface, i ->
+
+                        //Create waiting dialog
+                        val dialog = AlertDialog.Builder(this)
+                            .setCancelable(false)
+                            .setMessage("waiting...")
+                            .create()
+
+                        dialog.show()
+
+                        //Update order
+                        val update_data = HashMap<String,Any>()
+                        update_data.put("orderStatus",2)
+                        update_data.put("shipperUid",Common.currentShipperUser!!.uid!!)
+
+                        FirebaseDatabase.getInstance()
+                            .getReference(Common.RESTAURANT_REF)
+                            .child(shippingOrderModel!!.restaurantKey!!)
+                            .child(Common.ORDER_REF)
+                            .child(shippingOrderModel!!.orderModel!!.key!!)
+                            .updateChildren(update_data)
+                            .addOnFailureListener { e-> Toast.makeText(this@ShippingActivity,e.message,Toast.LENGTH_LONG).show() }
+                            .addOnSuccessListener {
+
+                                //Delete shipping order information
+                                FirebaseDatabase.getInstance()
+                                    .getReference(Common.RESTAURANT_REF)
+                                    .child(shippingOrderModel!!.restaurantKey!!)
+                                    .child(Common.SHIPPING_ORDER_REF)
+                                    .child(shippingOrderModel!!.orderModel!!.key!!)
+                                    .removeValue()
+                                    .addOnFailureListener { e-> Toast.makeText(this@ShippingActivity,e.message,Toast.LENGTH_LONG).show() }
+                                    .addOnSuccessListener {
+                                        //send notification
+                                        //copy from server app
+                                        //Load token
+                                        FirebaseDatabase.getInstance()
+                                            .getReference(Common.TOKEN_REF)
+                                            .child(shippingOrderModel!!.orderModel!!.userId!!)
+                                            .addListenerForSingleValueEvent(object:
+                                                ValueEventListener {
+                                                override fun onCancelled(p0: DatabaseError) {
+                                                    dialog.dismiss()
+                                                    Toast.makeText(this@ShippingActivity,""+p0.message,Toast.LENGTH_SHORT).show()
+                                                }
+
+                                                override fun onDataChange(p0: DataSnapshot) {
+                                                    if (p0.exists())
+                                                    {
+                                                        val tokenModel = p0.getValue(TokenModel::class.java)
+                                                        val notiData = HashMap<String,String>()
+                                                        notiData.put(Common.NOTI_TITLE,"Your order has been shipped");
+                                                        notiData.put(Common.NOTI_CONTENT,StringBuilder("Your order has been shipped by shipper")
+                                                            .append(Common.currentShipperUser!!.phone!!).toString())
+
+                                                        val sendData = FCMSendData(tokenModel!!.token!!,notiData)
+
+                                                        compositeDisposable.add(
+                                                            ifcmService!!.sendNotification(sendData)
+                                                                .subscribeOn(Schedulers.io())
+                                                                .observeOn(AndroidSchedulers.mainThread())
+                                                                .subscribe({ fcmResponse ->
+                                                                    dialog.dismiss()
+                                                                    if (fcmResponse.success == 1)
+                                                                    {
+                                                                        Toast.makeText(this@ShippingActivity,"Finish!",Toast.LENGTH_SHORT).show()
+
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        Toast.makeText(this@ShippingActivity,"Order has been update but failed to send notification",Toast.LENGTH_SHORT).show()
+
+                                                                    }
+
+                                                                    if (!TextUtils.isEmpty(Paper.book().read(Common.TRIP_START)))
+                                                                        Paper.book().delete(Common.TRIP_START)
+                                                                    EventBus.getDefault().postSticky(
+                                                                        UpdateShippingOrderEvent()
+                                                                    )
+                                                                    finish()
+
+                                                                },
+                                                                    {t ->
+                                                                        dialog.dismiss()
+                                                                        Toast.makeText(this@ShippingActivity,""+t.message,Toast.LENGTH_SHORT).show()
+
+                                                                    })
+                                                        )
+                                                    }
+                                                    else
+                                                    {
+                                                        dialog.dismiss()
+                                                        Toast.makeText(this@ShippingActivity,"Token not found",Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+
+                                            })
+
+                                    }
+
+                            }
+                    }
+                val dialog = builder.create()
+                dialog.show()
             }
         }
     }

@@ -9,4 +9,5 @@ class ShippingOrderModel {
     var orderModel:OrderModel?=null
     var isStartTrip=false
     var estimateTime:String="UNKNOWN"
+    var restaurantKey:String?=null //same as server app
 }

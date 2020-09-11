@@ -16,6 +16,10 @@ import com.example.kotlineatitv2shipper.adapter.MyShippingOrderAdapter
 import com.example.kotlineatitv2shipper.R
 import com.example.kotlineatitv2shipper.common.Common
 import com.example.kotlineatitv2shipper.model.ShippingOrderModel
+import com.example.kotlineatitv2shipper.model.eventbus.UpdateShippingOrderEvent
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 
 class HomeFragment : Fragment() {
     
@@ -49,5 +53,23 @@ class HomeFragment : Fragment() {
         recycler_order!!.setHasFixedSize(true)
         recycler_order!!.layoutManager = LinearLayoutManager(context)
         layoutAnimationController = AnimationUtils.loadLayoutAnimation(context,R.anim.layout_item_from_left)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        EventBus.getDefault().register(this)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (EventBus.getDefault().hasSubscriberForEvent(UpdateShippingOrderEvent::class.java))
+            EventBus.getDefault().removeStickyEvent(UpdateShippingOrderEvent::class.java)
+        EventBus.getDefault().unregister(this)
+    }
+
+    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    public fun pnUpdateShippingOrder(event:UpdateShippingOrderEvent)
+    {
+        homeViewModel.getOrderModelMutableLiveData(Common.currentShipperUser!!.phone!!)
     }
 }

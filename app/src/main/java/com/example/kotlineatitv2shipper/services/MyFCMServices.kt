@@ -1,8 +1,10 @@
 package com.example.kotlineatitv2shipper.services
 
 import com.example.kotlineatitv2shipper.common.Common
+import com.example.kotlineatitv2shipper.model.eventbus.UpdateShippingOrderEvent
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import org.greenrobot.eventbus.EventBus
 import java.util.*
 
 class MyFCMServices : FirebaseMessagingService() {
@@ -20,6 +22,8 @@ class MyFCMServices : FirebaseMessagingService() {
                 dataRecv[Common.NOTI_TITLE],
                 dataRecv[Common.NOTI_CONTENT],
                 null)
+
+            EventBus.getDefault().postSticky(UpdateShippingOrderEvent()) //refresh order list after receive order need ship
         }
     }
 }
